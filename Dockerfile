@@ -19,18 +19,14 @@ ENV VITE_BUILD_ID=$BUILD_ID
 # Générer le build optimisé
 RUN npm run build
 
-# Stage 2: Production (optionnel mais recommandé pour multi-stage)
-FROM node:20-alpine
+# Stage 2: Production avec Nginx
+FROM nginx:alpine
 
-WORKDIR /app
+# Copier uniquement les artifacts du build dans Nginx
+COPY --from=build /app/dist /usr/share/nginx/html
 
-# Copier uniquement les artifacts du build
-COPY --from=build /app/dist ./dist
-COPY --from=build /app/package*.json ./
+# Exposer le port 80
+EXPOSE 80
 
-# Installer uniquement les dépendances de production
-RUN npm ci --only=production
-
-EXPOSE 5173
-
-CMD ["npm", "run", "preview"]
+# Nginx démarre par défaut
+CMD ["nginx", "-g", "daemon off;"]
